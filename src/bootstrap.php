@@ -24,7 +24,7 @@ $container = new Container();
 
 // Register Logger
 $container->stuff('logger', function() {
-    $logFile = $_ENV['LOG_FILE_PATH'] ?? __DIR__ . '/../var/log/app.log';
+    $logFile = $_ENV['LOG_FILE_PATH'];
     if (!is_dir(dirname($logFile))) {
         mkdir(dirname($logFile), 0777, true);
     }
@@ -58,7 +58,7 @@ $container->stuff(\EICC\SendPoint\Service\FormSubmissionHandler::class, function
 
 // Register RateLimitService
 $container->stuff(\EICC\SendPoint\Service\RateLimitService::class, function() {
-    $storageDir = $_ENV['RATE_LIMIT_STORAGE_DIR'] ?? (__DIR__ . '/../var/cache/rate_limit');
+    $storageDir = $_ENV['RATE_LIMIT_STORAGE_DIR'] ?? (__DIR__ . 'cache/rate_limit');
     $limitSeconds = (int) ($_ENV['RATE_LIMIT_SECONDS'] ?? 600);
     return new \EICC\SendPoint\Service\RateLimitService($storageDir, $limitSeconds);
 });
