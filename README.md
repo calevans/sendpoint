@@ -32,7 +32,6 @@ SendPoint is a lightweight, internal-only API endpoint designed to handle form s
     SMTP_FROM_NAME="SendPoint System"
 
     # Security
-    ALLOWED_IPS=127.0.0.1
     ```
 
 ## Usage

@@ -1,4 +1,14 @@
 {
+    "name": "eicc/sendpoint",
+    "description": "API to send emails based on form submissions with YAML config.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Cal Evans",
+            "email": "cal@calevans.com"
+        }
+    ],
     "require": {
         "symfony/console": "^7.3",
         "symfony/yaml": "^7.3",

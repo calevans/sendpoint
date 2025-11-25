@@ -18,25 +18,9 @@ class FormController
     {
         $logger = $this->container->get('logger');
 
-        // 1. Validate IP
         $remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
 
-        // In a real environment, we might trust REMOTE_ADDR.
-        // If behind a proxy, we might need to check headers, but for this internal tool, REMOTE_ADDR is likely correct.
-
-        $allowedIps = explode(',', $_ENV['ALLOWED_IPS'] ?? '127.0.0.1');
-        $allowedIps = array_map('trim', $allowedIps);
-
-        if (!in_array($remoteIp, $allowedIps)) {
-            http_response_code(403);
-            echo "Forbidden: IP " . $remoteIp . " not allowed.";
-            if ($logger) {
-                $logger->log('WARNING', sprintf('Unauthorized access attempt from IP: %s', $remoteIp));
-            }
-            return;
-        }
-
-        // 2. Load Config (Early for CORS)
+        // 1. Load Config (Early for CORS)
         $formId = $_REQUEST['FORMID'] ?? '';
         if (empty($formId)) {
             http_response_code(400);
@@ -57,7 +41,7 @@ class FormController
             return;
         }
 
-        // 3. CORS Handling (Per-Form)
+        // 2. CORS Handling (Per-Form)
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
         $allowedOrigins = $config['allowed_origins'] ?? [];
         // Ensure array
@@ -96,14 +80,14 @@ class FormController
             exit;
         }
 
-        // 4. Validate Method
+        // 3. Validate Method
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             echo "Method Not Allowed";
             return;
         }
 
-        // 5. Handle Submission
+        // 4. Handle Submission
         /** @var \EICC\SendPoint\Service\FormSubmissionHandler $handler */
         $handler = $this->container->get(\EICC\SendPoint\Service\FormSubmissionHandler::class);
 
