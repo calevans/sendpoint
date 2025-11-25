@@ -38,8 +38,11 @@ $container->stuff('logger', function() use ($appRoot) {
 // Register Twig
 $container->stuff('twig', function() use ($appRoot) {
     $loader = new FilesystemLoader($appRoot . '/templates');
+    $cacheDir = $_ENV['TWIG_CACHE_DIR'] ?? 'var/cache/twig';
+    $cachePath = ($cacheDir[0] === '/') ? $cacheDir : ($appRoot . '/' . $cacheDir);
+
     return new Environment($loader, [
-        'cache' => $appRoot . '/var/cache/twig',
+        'cache' => $cachePath,
         'auto_reload' => true, // Useful for development
     ]);
 });
@@ -62,13 +65,10 @@ $container->stuff(\EICC\SendPoint\Service\FormSubmissionHandler::class, function
 
 // Register RateLimitService
 $container->stuff(\EICC\SendPoint\Service\RateLimitService::class, function() use ($appRoot) {
-    $envDir = $_ENV['RATE_LIMIT_STORAGE_DIR'] ?? null;
-    if ($envDir) {
-        // If it's an absolute path, use it. If relative, prepend appRoot.
-        $storageDir = ($envDir[0] === '/') ? $envDir : ($appRoot . '/' . $envDir);
-    } else {
-        $storageDir = $appRoot . '/var/cache/rate_limit';
-    }
+    $envDir = $_ENV['RATE_LIMIT_STORAGE_DIR'] ?? 'cache';
+
+    // If it's an absolute path, use it. If relative, prepend appRoot.
+    $storageDir = ($envDir[0] === '/') ? $envDir : ($appRoot . '/' . $envDir);
 
     $limitSeconds = (int) ($_ENV['RATE_LIMIT_SECONDS'] ?? 600);
     return new \EICC\SendPoint\Service\RateLimitService($storageDir, $limitSeconds);
