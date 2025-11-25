@@ -1,6 +1,6 @@
 # SendPoint
 
-SendPoint is a lightweight, internal-only API endpoint designed to handle form submissions from local StaticForge sites. It validates incoming data against strict YAML definitions and dispatches transactional emails using Twig templates.
+SendPoint is a lightweight, internal-only API endpoint designed to handle form submissions from local [StaticForge](https://calevans.com/staticforge) sites. It validates incoming data against strict YAML definitions and dispatches transactional emails using Twig templates.
 
 ## Installation
 
@@ -39,10 +39,25 @@ SendPoint is a lightweight, internal-only API endpoint designed to handle form s
 
 SendPoint accepts `POST` requests to the root endpoint.
 
+**Important for CORS:** If you are making requests from a browser (JavaScript), you **must** include the `FORMID` in the URL query string so that the preflight `OPTIONS` request can validate the origin.
+
+Example: `https://sendpoint.lndo.site/?FORMID=CONTACT_US`
+
 ### Request Parameters
 
-*   `FORMID` (Required): A unique identifier for the form. This corresponds to the configuration and template files.
+*   `FORMID` (Required): A unique identifier for the form. Can be passed in the URL query string (recommended for CORS) or the POST body.
 *   `...` (Other Fields): Any other form fields defined in your YAML configuration.
+
+### Example Request (JavaScript / CORS)
+
+```javascript
+const url = 'https://sendpoint.lndo.site/?FORMID=CONTACT_US';
+const formData = new FormData();
+formData.append('email', 'user@example.com');
+// ...
+
+fetch(url, { method: 'POST', body: formData });
+```
 
 ### Example Request (cURL)
 
