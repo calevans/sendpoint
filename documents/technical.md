@@ -21,14 +21,16 @@ SendPoint is a lightweight, internal-only API endpoint that processes form submi
 
 ## 3. Workflows & Event Triggers
 - **Event: Form Submission Received**
-    1. **Validate IP:** If notin WhiteList, return `403`.
-    2. **Validate Method:** If not `POST`, return `405`.
-    3. **Load Config:** Look up `FORMID.yml`. If missing, return `400`.
-    4. **Filter & Validate:**
+    1. **Validate IP:** If not in WhiteList, return `403`.
+    2. **Load Config:** Look up `FORMID.yml` (from `$_REQUEST['FORMID']`). If missing, return `400`.
+    3. **CORS Check:** Validate `Origin` header against `config['allowed_origins']`.
+    4. **Validate Method:** If not `POST`, return `405`.
+    5. **Filter & Validate:**
+        - **Honeypot Check:** If `honeypot_field` is filled, return `400` (Spam detected).
         - Strip fields not in YAML.
         - Check required fields/types. If invalid, return `400`.
-    5. **Render:** Generate email body using `FORMID.twig`.
-    6. **Send:** Dispatch via SMTP.
+    6. **Render:** Generate HTML email body using `FORMID.twig`.
+    7. **Send:** Dispatch via SMTP (HTML with text fallback).
         - If success: Log event, return `200`.
         - If SMTP fails: Log error, return `500`.
 
@@ -40,6 +42,8 @@ SendPoint is a lightweight, internal-only API endpoint that processes form submi
 
 ## 5. Access, Security, and Compliance
 - **Network Security:** Strict IP whitelist.
+- **CORS:** Per-form `Origin` header validation against `allowed_origins` in YAML.
+- **Spam Protection:** Optional honeypot field validation.
 - **Input Sanitization:** Aggressive filtering; only explicitly defined fields are processed.
 - **Recipient Locking:** "To" address is hardcoded in YAML; never accepted from user input.
 - **Secrets:** SMTP credentials stored in `.env`, never committed to code.
@@ -83,3 +87,6 @@ SendPoint is a lightweight, internal-only API endpoint that processes form submi
 ## 13. Decision Log
 - **D1:** Use YAML for config — Simple, human-readable, no DB required — 2025-11-24 — System Architect
 - **D2:** IP Whitelist only — Sufficient security for internal-only tool — 2025-11-24 — System Architect
+- **D3:** Honeypot Field — Simple spam protection without CAPTCHA — 2025-11-24 — System Architect
+- **D4:** CORS Validation — Prevent unauthorized cross-origin usage — 2025-11-24 — System Architect
+- **D5:** HTML Emails — Support rich content with text fallback — 2025-11-24 — System Architect

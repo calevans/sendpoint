@@ -65,9 +65,13 @@ This file defines the recipient, subject, and validation rules for the form fiel
 **Example: `templates/CONTACT_US.yml`**
 
 ```yaml
-recipient: support@example.com
+recipient: support@example.com # (Required)
 subject: "New Contact Form Submission"
 reply_to_field: email  # (Optional) Use the 'email' field value for the Reply-To header
+honeypot_field: website_url # (Optional) Field name to use as a honeypot for spam protection
+allowed_origins: # (Optional) List of allowed origins for CORS
+  - https://example.com
+  - https://www.example.com
 
 fields:
   email:
@@ -86,7 +90,28 @@ fields:
 *   `email`: Validates as a valid email address.
 *   `int` / `integer`: Validates as an integer.
 
+**Honeypot Protection:**
+If `honeypot_field` is defined, any submission containing a value for that field will be rejected as spam. Ensure this field is hidden in your HTML form so legitimate users do not fill it out.
+
 **Note:** Any field sent in the POST request that is *not* defined in the `fields` section of the YAML file will be ignored and stripped from the data.
+
+### 2. Template File (`FORMID.twig`)
+
+This file defines the body of the email sent. It uses Twig syntax and has access to all the validated data fields. SendPoint supports HTML emails.
+
+**Example: `templates/CONTACT_US.twig`**
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>New message from {{ name }}</h2>
+    <p><strong>Email:</strong> {{ email }}</p>
+    <hr>
+    <p>{{ message|nl2br }}</p>
+</body>
+</html>
+```
 
 ### 2. Template File (`FORMID.twig`)
 

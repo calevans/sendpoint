@@ -10,6 +10,12 @@ class FormValidatorService
 {
     public function validate(array $data, array $config): array
     {
+        // 0. Honeypot Check
+        $honeypotField = $config['honeypot_field'] ?? null;
+        if ($honeypotField && !empty($data[$honeypotField])) {
+            throw new ValidationException("Spam detected.");
+        }
+
         $cleanedData = [];
         $fieldsConfig = $config['fields'] ?? [];
 

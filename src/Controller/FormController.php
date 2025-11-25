@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace EICC\SendPoint\Controller;
 
 use EICC\Utils\Container;
-use EICC\SendPoint\Service\FormConfigService;
-use EICC\SendPoint\Service\FormValidatorService;
-use EICC\SendPoint\Service\EmailService;
 use EICC\SendPoint\Exception\ValidationException;
-use Twig\Environment;
 use Throwable;
 
 class FormController
@@ -40,23 +36,16 @@ class FormController
             return;
         }
 
-        // 2. Validate Method
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo "Method Not Allowed";
-            return;
-        }
-
-        // 3. Load Config
-        $formId = $_POST['FORMID'] ?? '';
+        // 2. Load Config (Early for CORS)
+        $formId = $_REQUEST['FORMID'] ?? '';
         if (empty($formId)) {
             http_response_code(400);
             echo "Bad Request: Missing FORMID";
             return;
         }
 
-        /** @var FormConfigService $configService */
-        $configService = $this->container->get(FormConfigService::class);
+        /** @var \EICC\SendPoint\Service\FormConfigService $configService */
+        $configService = $this->container->get(\EICC\SendPoint\Service\FormConfigService::class);
         $config = $configService->loadConfig($formId);
 
         if ($config === null) {
@@ -68,65 +57,66 @@ class FormController
             return;
         }
 
-        // 4. Validate Data
-        /** @var FormValidatorService $validatorService */
-        $validatorService = $this->container->get(FormValidatorService::class);
+        // 3. CORS Handling (Per-Form)
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allowedOrigins = $config['allowed_origins'] ?? [];
+        // Ensure array
+        if (!is_array($allowedOrigins)) {
+            $allowedOrigins = [$allowedOrigins];
+        }
+
+        // Require Origin header if allowed_origins is defined
+        if (!empty($allowedOrigins) && empty($origin)) {
+            http_response_code(400);
+            echo "Bad Request: Missing Origin header";
+            if ($logger) {
+                $logger->log('WARNING', sprintf('CORS failure for FORMID %s: Missing Origin header', $formId));
+            }
+            return;
+        }
+
+        if ($origin) {
+            if (in_array($origin, $allowedOrigins)) {
+                header('Access-Control-Allow-Origin: ' . $origin);
+                header('Access-Control-Allow-Methods: POST, OPTIONS');
+                header('Access-Control-Allow-Headers: Content-Type');
+            } else {
+                // Origin present but not allowed
+                http_response_code(403);
+                echo "Forbidden: Origin not allowed";
+                if ($logger) {
+                    $logger->log('WARNING', sprintf('CORS failure for FORMID %s: Origin %s not allowed', $formId, $origin));
+                }
+                return;
+            }
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit;
+        }
+
+        // 4. Validate Method
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo "Method Not Allowed";
+            return;
+        }
+
+        // 5. Handle Submission
+        /** @var \EICC\SendPoint\Service\FormSubmissionHandler $handler */
+        $handler = $this->container->get(\EICC\SendPoint\Service\FormSubmissionHandler::class);
 
         try {
-            $cleanedData = $validatorService->validate($_POST, $config);
+            // Pass config to handler to avoid reloading
+            $handler->handleWithConfig($formId, $config, $_POST, $remoteIp);
+            echo "OK";
         } catch (ValidationException $e) {
             http_response_code(400);
             echo "Bad Request: " . $e->getMessage();
-            if ($logger) {
-                $logger->log('WARNING', sprintf('Validation failure for FORMID %s: %s from IP: %s', $formId, $e->getMessage(), $remoteIp));
-            }
-            return;
-        }
-
-        // 5. Render Template
-        /** @var Environment $twig */
-        $twig = $this->container->get('twig');
-
-        try {
-            $body = $twig->render($formId . '.twig', $cleanedData);
         } catch (Throwable $e) {
             http_response_code(500);
             echo "Internal Server Error";
-            if ($logger) {
-                $logger->log('ERROR', sprintf('Template rendering failed for FORMID %s: %s from IP: %s', $formId, $e->getMessage(), $remoteIp));
-            }
-            return;
-        }
-
-        // 6. Send Email
-        /** @var EmailService $emailService */
-        $emailService = $this->container->get(EmailService::class);
-
-        $recipient = $config['recipient'] ?? '';
-        $subject = $config['subject'] ?? 'New Submission';
-
-        // Determine Reply-To
-        $replyToField = $config['reply_to_field'] ?? null;
-        $replyTo = null;
-        if ($replyToField && isset($cleanedData[$replyToField])) {
-            $replyTo = $cleanedData[$replyToField];
-        }
-
-        try {
-            $emailService->send($recipient, $subject, $body, $replyTo);
-
-            http_response_code(200);
-            echo "OK";
-
-            if ($logger) {
-                $logger->log('INFO', sprintf('Email sent successfully for FORMID %s to %s from IP: %s', $formId, $recipient, $remoteIp));
-            }
-        } catch (Throwable $e) {
-            http_response_code(500);
-            echo "Internal Server Error";
-            if ($logger) {
-                $logger->log('ERROR', sprintf('Email sending failed for FORMID %s: %s from IP: %s', $formId, $e->getMessage(), $remoteIp));
-            }
         }
     }
 }

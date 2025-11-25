@@ -21,7 +21,7 @@ class EmailService
     public function send(
         string $to,
         string $subject,
-        string $body,
+        string $htmlContent,
         ?string $replyTo = null
     ): bool {
         try {
@@ -32,7 +32,8 @@ class EmailService
                 ->from($this->fromName . ' <' . $this->fromEmail . '>')
                 ->to($to)
                 ->subject($subject)
-                ->text($body);
+                ->html($htmlContent)
+                ->text(strip_tags($htmlContent));
 
             if ($replyTo) {
                 $email->replyTo($replyTo);
