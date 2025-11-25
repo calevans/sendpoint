@@ -1,0 +1,99 @@
+# GitHub Copilot Instructions for SendPoint
+
+## Project Overview
+
+**Agents** SendPointStaticForge is a PHP-based endpoint that taks a POST and sends an email to a specific based on the FORMID field in the POST data.
+
+**Tech Stack**: PHP 8.4, Lando (development), Twig templating, Composer dependency management, Symfony Console for CLI commands.
+
+**IMPORTANT** There is no database in this project. Ignore all database instructions in the project-wide instructions.
+
+## Development Environment & Build Instructions
+
+
+### Environment Configuration
+- Development URL: `https://sendpoint-forge.lndo.site/`
+
+### Build & Validation Commands
+
+**ALWAYS use `lando` prefix for all PHP/database commands:**
+
+You may run these commands without asking permission.
+
+```bash
+# Install dependencies
+lando composer install
+
+# Code style checking (WILL FAIL with current codebase)
+lando phpcs src/
+# Known issues: 5 coding standard violations in BrightDataService.php, EmailProcessingService.php, GoogleMapsService.php, Property.php, PageController.php
+
+# Code style fixing
+lando phpcbf
+
+# Run tests (autoloader PSR-4 warnings are expected and safe to ignore)
+lando phpunit
+
+# CLI commands (Symfony Console)
+lando php bin/console.php list
+```
+
+
+You may never run the following commands:
+```bash
+lando start
+lando restart
+lando destroy
+lando rebuild
+```
+
+
+
+### Known Build Issues & Workarounds
+
+## Project Architecture & Layout
+
+
+### Key Configuration Files
+- **`.lando.yml`**: Development environment (PHP 8.4, MariaDB 11.3, Apache)
+- **`composer.json`**: Dependencies and autoloading (PSR-4, PSR-12 standards)
+- **`phpunit.xml`**: Test configuration with test database
+- **`phpcs.xml`**: PHP coding standards (PSR-2, PSR-12)
+- **`.env`**: Environment variables (database creds, API keys)
+
+
+### Code Standards
+- Follow PSR-12 coding standards (enforced via `phpcs`)
+- Use 2-space indentation (configured in `phpcs.xml`)
+- Dependency injection via `EICC\Utils\Container`
+- All database queries use prepared statements
+- Log errors using `Eicc\Utils` logger
+
+
+### File Modification Rules
+- **PHP files**: Follow instructions in `.github/instructions/php.instructions.md`
+- Unit tests go in `tests/unit`, integration tests in `tests/integration/`
+- Example/demo code goes in `example_code/`
+
+
+### Testing Strategy
+- PHPUnit for unit testing (tests may have autoloader warnings - ignore)
+- Manual testing via web interface and CLI commands
+- Integration testing for API endpoints
+
+## Critical Information for Copilot
+
+### Always Required Steps
+1. **Use Lando**: Never run PHP/database commands without `lando` prefix
+4. **Container**: Bootstrap sets up dependency injection - always use it
+
+### Error Prevention
+- Check Lando is running before any development work: `lando info`
+- Environment file must exist and be configured: `.env`
+
+### Performance Considerations
+- CLI bulk operations support batching via `--limit` parameter
+- Image processing can be memory intensive - monitor for large datasets
+- Database queries are optimized with indexes for maintenance operations
+
+**Trust these instructions** - they are comprehensive and tested. Only search for additional information if instructions are incomplete or found to be incorrect.

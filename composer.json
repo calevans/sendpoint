@@ -1,0 +1,16 @@
+{
+    "require": {
+        "symfony/console": "^7.3",
+        "symfony/yaml": "^7.3",
+        "symfony/mailer": "^7.3",
+        "symfony/dotenv": "^7.3",
+        "twig/twig": "^3.22",
+        "monolog/monolog": "^3.9",
+        "eicc/utils": "^1.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "EICC\\SendPoint\\": "src/"
+        }
+    }
+}
