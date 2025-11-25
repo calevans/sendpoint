@@ -47,7 +47,8 @@ $container->stuff(FormConfigService::class, function() {
 
 // Register FormValidatorService
 $container->stuff(FormValidatorService::class, function() {
-    return new FormValidatorService();
+    $defaultMaxLength = (int) ($_ENV['DEFAULT_MAX_FIELD_LENGTH'] ?? 2048);
+    return new FormValidatorService($defaultMaxLength);
 });
 
 // Register FormSubmissionHandler
@@ -60,6 +61,15 @@ $container->stuff(\EICC\SendPoint\Service\RateLimitService::class, function() {
     $storageDir = $_ENV['RATE_LIMIT_STORAGE_DIR'] ?? (__DIR__ . '/../var/cache/rate_limit');
     $limitSeconds = (int) ($_ENV['RATE_LIMIT_SECONDS'] ?? 600);
     return new \EICC\SendPoint\Service\RateLimitService($storageDir, $limitSeconds);
+});
+
+// Register AltchaService
+$container->stuff(\EICC\SendPoint\Service\AltchaService::class, function() {
+    $key = $_ENV['ALTCHA_HMAC_KEY'] ?? '';
+    if (empty($key)) {
+        throw new \RuntimeException('ALTCHA_HMAC_KEY is not set in .env');
+    }
+    return new \EICC\SendPoint\Service\AltchaService($key);
 });
 
 // Register EmailService

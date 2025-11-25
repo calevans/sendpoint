@@ -8,6 +8,10 @@ use EICC\SendPoint\Exception\ValidationException;
 
 class FormValidatorService
 {
+    public function __construct(
+        private int $defaultMaxLength = 2048
+    ) {}
+
     public function validate(array $data, array $config): array
     {
         // 0. Honeypot Check
@@ -38,7 +42,7 @@ class FormValidatorService
             }
 
             // Check Max Length
-            $maxLength = $fieldRules['max_length'] ?? 2048; // Default to 2048 chars if not specified
+            $maxLength = $fieldRules['max_length'] ?? $this->defaultMaxLength;
             if ($value !== null && strlen((string)$value) > $maxLength) {
                 throw new ValidationException(sprintf("Field '%s' exceeds maximum length of %d characters.", $fieldName, $maxLength));
             }
