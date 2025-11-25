@@ -13,6 +13,7 @@ use EICC\SendPoint\Service\FormConfigService;
 use EICC\SendPoint\Service\FormValidatorService;
 use EICC\SendPoint\Service\FormSubmissionHandler;
 use EICC\SendPoint\Service\EmailService;
+use EICC\SendPoint\Service\RateLimitService;
 
 // Load environment variables
 $dotenv = new Dotenv();
@@ -52,6 +53,13 @@ $container->stuff(FormValidatorService::class, function() {
 // Register FormSubmissionHandler
 $container->stuff(\EICC\SendPoint\Service\FormSubmissionHandler::class, function() use ($container) {
     return new \EICC\SendPoint\Service\FormSubmissionHandler($container);
+});
+
+// Register RateLimitService
+$container->stuff(\EICC\SendPoint\Service\RateLimitService::class, function() {
+    $storageDir = $_ENV['RATE_LIMIT_STORAGE_DIR'] ?? (__DIR__ . '/../var/cache/rate_limit');
+    $limitSeconds = (int) ($_ENV['RATE_LIMIT_SECONDS'] ?? 600);
+    return new \EICC\SendPoint\Service\RateLimitService($storageDir, $limitSeconds);
 });
 
 // Register EmailService

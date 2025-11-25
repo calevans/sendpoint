@@ -6,6 +6,7 @@ namespace EICC\SendPoint\Controller;
 
 use EICC\Utils\Container;
 use EICC\SendPoint\Exception\ValidationException;
+use EICC\SendPoint\Exception\RateLimitException;
 use Throwable;
 
 class FormController
@@ -19,6 +20,20 @@ class FormController
         $logger = $this->container->get('logger');
 
         $remoteIp = $_SERVER['REMOTE_ADDR'] ?? '';
+
+        // Rate Limiting
+        try {
+            /** @var \EICC\SendPoint\Service\RateLimitService $rateLimitService */
+            $rateLimitService = $this->container->get(\EICC\SendPoint\Service\RateLimitService::class);
+            $rateLimitService->checkLimit($remoteIp);
+        } catch (RateLimitException $e) {
+            http_response_code(429);
+            echo "Too Many Requests";
+            if ($logger) {
+                $logger->log('WARNING', sprintf('Rate limit exceeded for IP: %s', $remoteIp));
+            }
+            return;
+        }
 
         // 1. Load Config (Early for CORS)
         $formId = $_REQUEST['FORMID'] ?? '';

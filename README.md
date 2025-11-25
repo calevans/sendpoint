@@ -148,3 +148,23 @@ Logs are written to `var/log/app.log`.
 *   **INFO**: Successful email sends.
 *   **WARNING**: Validation failures, unauthorized IP access, or unknown FORMID attempts.
 *   **ERROR**: SMTP failures or template rendering errors.
+
+## Security Features
+
+### Rate Limiting
+To prevent abuse, SendPoint implements IP-based rate limiting.
+- **Default Limit:** 1 request per 10 minutes (600 seconds).
+- **Configuration:** Set `RATE_LIMIT_SECONDS` in your `.env` file.
+- **Response:** Returns `429 Too Many Requests` if the limit is exceeded.
+
+### Max Length Validation
+To prevent large payload attacks, all fields have a maximum length.
+- **Default Limit:** 2048 characters per field.
+- **Configuration:** You can override this per-field in your YAML form definition:
+  ```yaml
+  fields:
+    message:
+      type: string
+      required: true
+      max_length: 5000 # Override default
+  ```

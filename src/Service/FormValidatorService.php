@@ -37,6 +37,12 @@ class FormValidatorService
                 throw new ValidationException(sprintf("Field '%s' is required.", $fieldName));
             }
 
+            // Check Max Length
+            $maxLength = $fieldRules['max_length'] ?? 2048; // Default to 2048 chars if not specified
+            if ($value !== null && strlen((string)$value) > $maxLength) {
+                throw new ValidationException(sprintf("Field '%s' exceeds maximum length of %d characters.", $fieldName, $maxLength));
+            }
+
             // Skip type check if value is empty and not required
             if ($value === null || $value === '') {
                 continue;
