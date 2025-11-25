@@ -3,4 +3,8 @@ vendor/
 var/
 .idea/
 .vscode/
+example_code/
+logs/
+templates/
+
 .DS_Store

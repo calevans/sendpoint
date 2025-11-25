@@ -22,7 +22,7 @@ $container = new Container();
 
 // Register Logger
 $container->stuff('logger', function() {
-    $logFile = __DIR__ . '/../var/log/app.log';
+    $logFile = $_ENV['LOG_FILE_PATH'] ?? __DIR__ . '/../var/log/app.log';
     if (!is_dir(dirname($logFile))) {
         mkdir(dirname($logFile), 0777, true);
     }
@@ -51,7 +51,7 @@ $container->stuff(FormValidatorService::class, function() {
 // Register EmailService
 $container->stuff(EmailService::class, function() {
     $dsn = sprintf(
-        'smtp://%s:%s@%s:%s',
+        'smtp://%s:%s@%s:%s?verify_peer=0',
         urlencode($_ENV['SMTP_USER'] ?? ''),
         urlencode($_ENV['SMTP_PASS'] ?? ''),
         $_ENV['SMTP_HOST'] ?? 'localhost',

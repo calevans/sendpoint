@@ -20,7 +20,7 @@ SendPoint is a lightweight, internal-only API endpoint designed to handle form s
     ```bash
     cp .env.example .env
     ```
-    
+
     Edit `.env`:
     ```dotenv
     # SMTP Configuration

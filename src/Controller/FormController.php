@@ -33,7 +33,7 @@ class FormController
 
         if (!in_array($remoteIp, $allowedIps)) {
             http_response_code(403);
-            echo "Forbidden";
+            echo "Forbidden: IP " . $remoteIp . " not allowed.";
             if ($logger) {
                 $logger->log('WARNING', sprintf('Unauthorized access attempt from IP: %s', $remoteIp));
             }
