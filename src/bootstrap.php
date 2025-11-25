@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../vendor/autoload.php';
+$appRoot = realpath(__DIR__ . '/..');
+
+require_once $appRoot . '/vendor/autoload.php';
 
 use EICC\Utils\Container;
 use EICC\Utils\Log;
@@ -17,14 +19,16 @@ use EICC\SendPoint\Service\RateLimitService;
 
 // Load environment variables
 $dotenv = new Dotenv();
-$dotenv->load(__DIR__ . '/../.env');
+$dotenv->load($appRoot . '/.env');
 
 // Initialize Container
 $container = new Container();
 
 // Register Logger
-$container->stuff('logger', function() {
-    $logFile = $_ENV['LOG_FILE_PATH'];
+$container->stuff('logger', function() use ($appRoot) {
+    $envPath = $_ENV['LOG_FILE_PATH'] ?? 'logs/sendpoint.log';
+    $logFile = ($envPath[0] === '/') ? $envPath : ($appRoot . '/' . $envPath);
+
     if (!is_dir(dirname($logFile))) {
         mkdir(dirname($logFile), 0777, true);
     }
@@ -32,17 +36,17 @@ $container->stuff('logger', function() {
 });
 
 // Register Twig
-$container->stuff('twig', function() {
-    $loader = new FilesystemLoader(__DIR__ . '/../templates');
+$container->stuff('twig', function() use ($appRoot) {
+    $loader = new FilesystemLoader($appRoot . '/templates');
     return new Environment($loader, [
-        'cache' => __DIR__ . '/../var/cache/twig',
+        'cache' => $appRoot . '/var/cache/twig',
         'auto_reload' => true, // Useful for development
     ]);
 });
 
 // Register FormConfigService
-$container->stuff(FormConfigService::class, function() {
-    return new FormConfigService(__DIR__ . '/../templates');
+$container->stuff(FormConfigService::class, function() use ($appRoot) {
+    return new FormConfigService($appRoot . '/templates');
 });
 
 // Register FormValidatorService
@@ -57,8 +61,15 @@ $container->stuff(\EICC\SendPoint\Service\FormSubmissionHandler::class, function
 });
 
 // Register RateLimitService
-$container->stuff(\EICC\SendPoint\Service\RateLimitService::class, function() {
-    $storageDir = $_ENV['RATE_LIMIT_STORAGE_DIR'] ?? (__DIR__ . 'cache/rate_limit');
+$container->stuff(\EICC\SendPoint\Service\RateLimitService::class, function() use ($appRoot) {
+    $envDir = $_ENV['RATE_LIMIT_STORAGE_DIR'] ?? null;
+    if ($envDir) {
+        // If it's an absolute path, use it. If relative, prepend appRoot.
+        $storageDir = ($envDir[0] === '/') ? $envDir : ($appRoot . '/' . $envDir);
+    } else {
+        $storageDir = $appRoot . '/var/cache/rate_limit';
+    }
+
     $limitSeconds = (int) ($_ENV['RATE_LIMIT_SECONDS'] ?? 600);
     return new \EICC\SendPoint\Service\RateLimitService($storageDir, $limitSeconds);
 });

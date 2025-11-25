@@ -6,5 +6,6 @@ var/
 example_code/
 logs/
 templates/
+cache/
 
 .DS_Store
